@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <meta name="theme-color" content="#ffffff">
+  <title>Samsung Game Controller</title>
+  <style>
+    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}html,body{min-height:100%}body{margin:0;background:#fff;color:#1428a0;font-family:Arial,Helvetica,sans-serif;overscroll-behavior:none;touch-action:manipulation}main{width:min(100%,480px);min-height:100dvh;margin:auto;padding:max(34px,env(safe-area-inset-top)) 22px max(28px,env(safe-area-inset-bottom));display:flex;flex-direction:column;align-items:center;justify-content:space-between;gap:30px}.logo{width:min(72vw,280px);margin-top:5vh}.start{width:100%;min-height:78px;border:0;border-radius:22px;background:#1428a0;color:#fff;font:800 1.3rem Arial,sans-serif;letter-spacing:.08em;box-shadow:0 12px 26px rgba(20,40,160,.22)}.arrows{width:100%;display:grid;grid-template-columns:1fr 1fr;gap:18px}.move{height:min(34vh,220px);min-height:150px;border:3px solid #1428a0;border-radius:28px;background:#fff;color:#1428a0;font:800 clamp(4rem,20vw,7rem) Arial,sans-serif;line-height:1;user-select:none;touch-action:none;transition:transform 70ms ease,background 70ms ease,color 70ms ease}.move.active{transform:scale(.96);background:#1428a0;color:#fff}button{cursor:pointer}button:active{transform:scale(.97)}.connection{width:8px;height:8px;border-radius:50%;background:#c8c8c8}.connection.online{background:#20b46a}.connection.error{background:#e5484d}
+  </style>
+</head>
+<body>
+  <main>
+    <svg class="logo" viewBox="0 0 420 150" role="img" aria-label="Samsung"><ellipse cx="210" cy="75" rx="202" ry="63" fill="#1428a0" transform="rotate(-7 210 75)"/><text x="210" y="92" text-anchor="middle" fill="white" font-family="Arial, Helvetica, sans-serif" font-size="53" font-weight="900" letter-spacing="-2">SAMSUNG</text></svg>
+    <button id="start" class="start">START GAME</button>
+    <div class="arrows"><button id="left" class="move" aria-label="Move left">←</button><button id="right" class="move" aria-label="Move right">→</button></div>
+    <span id="connection" class="connection" aria-label="Firebase connection status"></span>
+  </main>
+  <script>
+    const firebaseConfig={apiKey:"AIzaSyCMtbsKNIET9NjOyw2XHzA9PfyBn1yO1O4",authDomain:"fallingobjects-46163.firebaseapp.com",databaseURL:"https://fallingobjects-46163-default-rtdb.firebaseio.com",projectId:"fallingobjects-46163",storageBucket:"fallingobjects-46163.firebasestorage.app",messagingSenderId:"243170931177",appId:"1:243170931177:web:778f044433b5ee2956db78",measurementId:"G-39GSTNJQPB"};
+    const deviceId="samsung-screen-01",controlUrl=`${firebaseConfig.databaseURL}/devices/${deviceId}/control.json`,startButton=document.querySelector("#start"),leftButton=document.querySelector("#left"),rightButton=document.querySelector("#right"),connection=document.querySelector("#connection");let direction=0,repeatTimer=null;
+    async function send(values){try{const response=await fetch(controlUrl,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify(values)});if(!response.ok)throw new Error(`Firebase returned ${response.status}`);connection.className="connection online"}catch(error){console.error(error);connection.className="connection error"}}
+    async function startGame(){navigator.vibrate?.(25);await send({start:true});window.setTimeout(()=>send({start:false}),500)}
+    function beginMove(value,button){stopMove(false);direction=value;button.classList.add("active");navigator.vibrate?.(15);send({horizontal:direction});repeatTimer=window.setInterval(()=>send({horizontal:direction}),350)}
+    function stopMove(shouldSend=true){window.clearInterval(repeatTimer);repeatTimer=null;direction=0;leftButton.classList.remove("active");rightButton.classList.remove("active");if(shouldSend)send({horizontal:0})}
+    function bindMoveButton(button,value){button.addEventListener("pointerdown",event=>{event.preventDefault();button.setPointerCapture?.(event.pointerId);beginMove(value,button)});button.addEventListener("pointerup",()=>stopMove());button.addEventListener("pointercancel",()=>stopMove());button.addEventListener("lostpointercapture",()=>stopMove())}
+    startButton.addEventListener("click",startGame);bindMoveButton(leftButton,-1);bindMoveButton(rightButton,1);window.addEventListener("blur",()=>stopMove());window.addEventListener("pagehide",()=>stopMove());document.addEventListener("visibilitychange",()=>{if(document.hidden)stopMove()});fetch(controlUrl).then(response=>connection.className=response.ok?"connection online":"connection error").catch(()=>connection.className="connection error");
+  </script>
+</body>
+</html>
