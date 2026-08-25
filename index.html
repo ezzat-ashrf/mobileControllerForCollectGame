@@ -45,7 +45,7 @@
       <div id="connection" class="connection"><span class="dot"></span><span class="label">OFFLINE</span></div>
     </header>
     <section class="session">
-      <button id="start">START GAME</button>
+      <button id="start" disabled>CONNECTING...</button>
       <div id="timer" class="timer" aria-live="polite">00:30</div>
     </section>
     <section id="controls" class="controls locked" aria-label="Claw controls">
@@ -89,11 +89,13 @@
     const newClientId = () => crypto.randomUUID
       ? crypto.randomUUID()
       : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-    const clientId = sessionStorage.getItem("clawControllerId") || newClientId();
-    sessionStorage.setItem("clawControllerId", clientId);
+    // A new page is a new controller, even when a browser duplicates a tab.
+    const clientId = newClientId();
     let gameActive = false;
     let gameEndsAt = 0;
     let serverTimeOffset = 0;
+    let firebaseOnline = false;
+    let sessionStateLoaded = false;
 
     const serverNow = () => Date.now() + serverTimeOffset;
 
@@ -164,7 +166,11 @@
         .then(result => {
           if (!result.committed) showBusy(result.snapshot.val() || {});
         })
-        .catch(error => console.error("Could not start game:", error));
+        .catch(error => {
+          console.error("Could not start game:", error);
+          startButton.disabled = !(firebaseOnline && sessionStateLoaded);
+          startButton.textContent = "START GAME";
+        });
     });
 
     function releaseAll(writeRemote = gameActive) {
@@ -180,8 +186,8 @@
       controls.classList.add("locked");
       timerDisplay.classList.remove("running");
       timerDisplay.textContent = "00:30";
-      startButton.disabled = false;
-      startButton.textContent = "START GAME";
+      startButton.disabled = !(firebaseOnline && sessionStateLoaded);
+      startButton.textContent = firebaseOnline && sessionStateLoaded ? "START GAME" : "CONNECTING...";
     }
 
     function showBusy(state) {
@@ -201,6 +207,7 @@
     });
 
     control.on("value", snapshot => {
+      sessionStateLoaded = true;
       const state = snapshot.val() || {};
       if ((Number(state.gameEndsAt) || 0) > serverNow()) showBusy(state);
       else showAvailable();
@@ -212,10 +219,16 @@
 
     db.ref(".info/connected").on("value", snapshot => {
       const online = snapshot.val() === true;
+      firebaseOnline = online;
       connection.classList.toggle("connected", online);
       connection.querySelector(".label").textContent = online ? "ONLINE" : "OFFLINE";
       if (online) {
         releaseAll(false);
+        if (sessionStateLoaded && gameEndsAt <= serverNow()) showAvailable();
+      } else {
+        controls.classList.add("locked");
+        startButton.disabled = true;
+        startButton.textContent = "CONNECTING...";
       }
     });
 
