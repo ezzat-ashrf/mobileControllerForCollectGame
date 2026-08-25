@@ -12,6 +12,8 @@
           "dropCommand": { ".validate": "newData.isNumber()" },
           "openCommand": { ".validate": "newData.isNumber()" },
           "startCommand": { ".validate": "newData.isNumber()" },
+          "gameEndsAt": { ".validate": "newData.isNumber()" },
+          "activeControllerId": { ".validate": "newData.isString() && newData.val().length <= 100" },
           "$other": { ".validate": false }
         }
       }

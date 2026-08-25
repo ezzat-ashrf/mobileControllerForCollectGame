@@ -86,15 +86,23 @@
     const timerDisplay = document.getElementById("timer");
     const heldPointers = new Map();
     const GAME_SECONDS = 30;
+    const newClientId = () => crypto.randomUUID
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    const clientId = sessionStorage.getItem("clawControllerId") || newClientId();
+    sessionStorage.setItem("clawControllerId", clientId);
     let gameActive = false;
-    let timerHandle = null;
     let gameEndsAt = 0;
+    let serverTimeOffset = 0;
+
+    const serverNow = () => Date.now() + serverTimeOffset;
 
     function update(values) {
       return control.update(values).catch(error => console.error("Firebase write failed:", error));
     }
 
     function setDirection(direction, pressed) {
+      if (!gameActive) return;
       document.getElementById(direction).classList.toggle("active", pressed);
       update({ [direction]: pressed });
     }
@@ -129,30 +137,46 @@
     document.getElementById("open").addEventListener("pointerdown", event => { event.preventDefault(); increment("openCommand"); });
 
     function renderTimer() {
-      const seconds = Math.max(0, Math.ceil((gameEndsAt - Date.now()) / 1000));
+      const seconds = Math.max(0, Math.ceil((gameEndsAt - serverNow()) / 1000));
       timerDisplay.textContent = `00:${String(seconds).padStart(2, "0")}`;
-      if (seconds <= 0) endGame();
+      if (seconds <= 0) showAvailable();
     }
 
-    function beginGame() {
-      releaseAll();
-      gameActive = true;
-      gameEndsAt = Date.now() + GAME_SECONDS * 1000;
-      controls.classList.remove("locked");
-      timerDisplay.classList.add("running");
+    startButton.addEventListener("pointerdown", event => {
+      if (startButton.disabled) return;
+      event.preventDefault();
+      if (navigator.vibrate) navigator.vibrate(45);
       startButton.disabled = true;
-      startButton.textContent = "GAME IN PROGRESS";
-      clearInterval(timerHandle);
-      renderTimer();
-      timerHandle = setInterval(renderTimer, 200);
+      startButton.textContent = "STARTING...";
+
+      const now = serverNow();
+      control.transaction(current => {
+        current = current || {};
+        if ((Number(current.gameEndsAt) || 0) > now) return;
+        return {
+          ...current,
+          up:false, down:false, left:false, right:false,
+          startCommand:(Number(current.startCommand) || 0) + 1,
+          gameEndsAt:now + GAME_SECONDS * 1000,
+          activeControllerId:clientId
+        };
+      })
+        .then(result => {
+          if (!result.committed) showBusy(result.snapshot.val() || {});
+        })
+        .catch(error => console.error("Could not start game:", error));
+    });
+
+    function releaseAll(writeRemote = gameActive) {
+      heldPointers.clear();
+      document.querySelectorAll(".move").forEach(button => button.classList.remove("active"));
+      if (writeRemote) update({ up:false, down:false, left:false, right:false });
     }
 
-    function endGame() {
-      if (!gameActive && !timerHandle) return;
+    function showAvailable() {
+      const wasActive = gameActive;
       gameActive = false;
-      clearInterval(timerHandle);
-      timerHandle = null;
-      releaseAll();
+      if (wasActive) releaseAll(true);
       controls.classList.add("locked");
       timerDisplay.classList.remove("running");
       timerDisplay.textContent = "00:30";
@@ -160,33 +184,43 @@
       startButton.textContent = "START GAME";
     }
 
-    startButton.addEventListener("pointerdown", event => {
-      if (gameActive) return;
-      event.preventDefault();
-      if (navigator.vibrate) navigator.vibrate(45);
-      control.child("startCommand").transaction(value => (Number(value) || 0) + 1)
-        .then(result => { if (result.committed) beginGame(); })
-        .catch(error => console.error("Could not start game:", error));
+    function showBusy(state) {
+      const wasActive = gameActive;
+      gameEndsAt = Number(state.gameEndsAt) || 0;
+      gameActive = gameEndsAt > serverNow() && state.activeControllerId === clientId;
+      if (wasActive && !gameActive) releaseAll(true);
+      controls.classList.toggle("locked", !gameActive);
+      timerDisplay.classList.toggle("running", gameEndsAt > serverNow());
+      startButton.disabled = gameEndsAt > serverNow();
+      startButton.textContent = gameActive ? "YOUR GAME" : "PLEASE WAIT";
+      renderTimer();
+    }
+
+    db.ref(".info/serverTimeOffset").on("value", snapshot => {
+      serverTimeOffset = Number(snapshot.val()) || 0;
     });
 
-    function releaseAll() {
-      heldPointers.clear();
-      document.querySelectorAll(".move").forEach(button => button.classList.remove("active"));
-      update({ up:false, down:false, left:false, right:false });
-    }
+    control.on("value", snapshot => {
+      const state = snapshot.val() || {};
+      if ((Number(state.gameEndsAt) || 0) > serverNow()) showBusy(state);
+      else showAvailable();
+    });
+
+    setInterval(() => {
+      if (gameEndsAt > serverNow()) renderTimer();
+    }, 200);
 
     db.ref(".info/connected").on("value", snapshot => {
       const online = snapshot.val() === true;
       connection.classList.toggle("connected", online);
       connection.querySelector(".label").textContent = online ? "ONLINE" : "OFFLINE";
       if (online) {
-        control.onDisconnect().update({ up:false, down:false, left:false, right:false });
-        releaseAll();
+        releaseAll(false);
       }
     });
 
-    window.addEventListener("blur", releaseAll);
-    window.addEventListener("pagehide", releaseAll);
+    window.addEventListener("blur", () => releaseAll());
+    window.addEventListener("pagehide", () => releaseAll());
     document.addEventListener("visibilitychange", () => { if (document.hidden) releaseAll(); });
     document.addEventListener("contextmenu", event => event.preventDefault());
     document.addEventListener("touchmove", event => event.preventDefault(), { passive:false });
