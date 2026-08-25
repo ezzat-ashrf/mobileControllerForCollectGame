@@ -10,14 +10,20 @@
     * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; -webkit-user-select:none; user-select:none; }
     html,body { width:100%; height:100%; margin:0; overflow:hidden; overscroll-behavior:none; touch-action:none; }
     body { color:#fff; font-family:system-ui,-apple-system,"Segoe UI",sans-serif; background:radial-gradient(circle at 20% 0,#172d67 0,transparent 38%),radial-gradient(circle at 100% 100%,#53152c 0,transparent 38%),#070914; padding:max(12px,env(safe-area-inset-top)) max(12px,env(safe-area-inset-right)) max(12px,env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left)); }
-    main { width:min(100%,560px); height:100%; margin:auto; display:grid; grid-template-rows:auto minmax(0,1fr) auto; gap:clamp(10px,2vh,18px); }
+    main { width:min(100%,560px); height:100%; margin:auto; display:grid; grid-template-rows:auto auto minmax(0,1fr) auto; gap:clamp(8px,1.5vh,14px); }
     header { display:flex; align-items:center; justify-content:space-between; padding:10px 14px; border:1px solid var(--line); border-radius:18px; background:var(--panel); box-shadow:0 14px 35px #0007; }
-    h1 { margin:0; font-size:clamp(1rem,4.5vw,1.35rem); letter-spacing:.08em; text-transform:uppercase; }
+    .logo { width:min(44vw,190px); max-height:52px; object-fit:contain; }
     .connection { display:flex; align-items:center; gap:7px; color:#aeb8cf; font-size:.74rem; font-weight:700; }
     .dot { width:11px; height:11px; border-radius:50%; background:var(--red); box-shadow:0 0 12px var(--red); }
     .connected .dot { background:#34df83; box-shadow:0 0 12px #34df83; }
     .connected .label { color:#b8ffd5; }
+    .session { display:grid; grid-template-columns:1fr auto; gap:10px; align-items:center; }
+    #start { min-height:54px; border-radius:18px; background:linear-gradient(145deg,#42d9ff,#176cff); font-size:clamp(1rem,5vw,1.35rem); letter-spacing:.06em; }
+    #start:disabled { filter:grayscale(.7); opacity:.55; }
+    .timer { min-width:82px; height:54px; display:grid; place-items:center; border:1px solid var(--line); border-radius:18px; background:var(--panel); font-size:1.45rem; font-weight:900; font-variant-numeric:tabular-nums; color:#8390aa; }
+    .timer.running { color:#fff; box-shadow:inset 0 0 20px #176cff55; }
     .controls { min-height:0; display:grid; grid-template-columns:minmax(0,1.15fr) minmax(110px,.85fr); gap:clamp(12px,3vw,20px); }
+    .controls.locked { opacity:.32; filter:grayscale(.7); pointer-events:none; }
     .dpad { min-height:0; display:grid; grid-template:repeat(3,1fr)/repeat(3,1fr); gap:8px; aspect-ratio:1; align-self:center; }
     button { border:1px solid rgba(255,255,255,.18); color:#fff; font:inherit; font-weight:900; cursor:pointer; touch-action:none; background:linear-gradient(145deg,#27345c,#12182f); box-shadow:0 8px 18px #0008,inset 0 1px #ffffff38,inset 0 -4px #0005; transition:transform 65ms,filter 65ms; }
     button.active,button:active { transform:translateY(4px) scale(.97); filter:brightness(.8); box-shadow:0 3px 8px #0008,inset 0 2px 5px #0007; }
@@ -29,16 +35,20 @@
     #drop { background:radial-gradient(circle at 38% 30%,#ff7185,var(--red) 45%,#a70825 100%); border:5px solid #ff8da0; }
     #open { aspect-ratio:auto; min-height:64px; border-radius:22px; background:linear-gradient(145deg,#ffd968,#c88d00); color:#201500; font-size:clamp(.85rem,4vw,1.15rem); }
     footer { color:#8792aa; text-align:center; font-size:.72rem; letter-spacing:.06em; }
-    @media (orientation:landscape) and (max-height:560px) { main{max-width:900px;grid-template: auto minmax(0,1fr)/1fr;} header{padding:7px 14px}.controls{grid-template-columns:1fr .55fr}.dpad{height:100%;width:auto;margin:auto}.actions{grid-template-columns:1fr 1fr;grid-template-rows:1fr}.action{height:100%;width:auto}#open{aspect-ratio:1;border-radius:50%}footer{display:none} }
+    @media (orientation:landscape) and (max-height:560px) { main{max-width:900px}.logo{max-height:38px}.controls{grid-template-columns:1fr .55fr}.dpad{height:100%;width:auto;margin:auto}.actions{grid-template-columns:1fr 1fr;grid-template-rows:1fr}.action{height:100%;width:auto}#open{aspect-ratio:1;border-radius:50%}footer{display:none} }
   </style>
 </head>
 <body>
   <main>
     <header>
-      <h1>Claw Controller</h1>
+      <img class="logo" src="Ecc Logo.png" alt="Egyptian Company for Cosmetics">
       <div id="connection" class="connection"><span class="dot"></span><span class="label">OFFLINE</span></div>
     </header>
-    <section class="controls" aria-label="Claw controls">
+    <section class="session">
+      <button id="start">START GAME</button>
+      <div id="timer" class="timer" aria-live="polite">00:30</div>
+    </section>
+    <section id="controls" class="controls locked" aria-label="Claw controls">
       <div class="dpad">
         <button id="up" class="move" data-direction="up" aria-label="Move forward">▲</button>
         <button id="left" class="move" data-direction="left" aria-label="Move left">◀</button>
@@ -71,7 +81,14 @@
     const db = firebase.database();
     const control = db.ref("machines/red-blue-01/control");
     const connection = document.getElementById("connection");
+    const controls = document.getElementById("controls");
+    const startButton = document.getElementById("start");
+    const timerDisplay = document.getElementById("timer");
     const heldPointers = new Map();
+    const GAME_SECONDS = 30;
+    let gameActive = false;
+    let timerHandle = null;
+    let gameEndsAt = 0;
 
     function update(values) {
       return control.update(values).catch(error => console.error("Firebase write failed:", error));
@@ -84,6 +101,7 @@
 
     document.querySelectorAll(".move").forEach(button => {
       button.addEventListener("pointerdown", event => {
+        if (!gameActive) return;
         if (event.button !== 0) return;
         event.preventDefault();
         button.setPointerCapture(event.pointerId);
@@ -102,12 +120,54 @@
     });
 
     function increment(command) {
+      if (!gameActive) return Promise.resolve();
       if (navigator.vibrate) navigator.vibrate(35);
       return control.child(command).transaction(value => (Number(value) || 0) + 1);
     }
 
     document.getElementById("drop").addEventListener("pointerdown", event => { event.preventDefault(); increment("dropCommand"); });
     document.getElementById("open").addEventListener("pointerdown", event => { event.preventDefault(); increment("openCommand"); });
+
+    function renderTimer() {
+      const seconds = Math.max(0, Math.ceil((gameEndsAt - Date.now()) / 1000));
+      timerDisplay.textContent = `00:${String(seconds).padStart(2, "0")}`;
+      if (seconds <= 0) endGame();
+    }
+
+    function beginGame() {
+      releaseAll();
+      gameActive = true;
+      gameEndsAt = Date.now() + GAME_SECONDS * 1000;
+      controls.classList.remove("locked");
+      timerDisplay.classList.add("running");
+      startButton.disabled = true;
+      startButton.textContent = "GAME IN PROGRESS";
+      clearInterval(timerHandle);
+      renderTimer();
+      timerHandle = setInterval(renderTimer, 200);
+    }
+
+    function endGame() {
+      if (!gameActive && !timerHandle) return;
+      gameActive = false;
+      clearInterval(timerHandle);
+      timerHandle = null;
+      releaseAll();
+      controls.classList.add("locked");
+      timerDisplay.classList.remove("running");
+      timerDisplay.textContent = "00:30";
+      startButton.disabled = false;
+      startButton.textContent = "START GAME";
+    }
+
+    startButton.addEventListener("pointerdown", event => {
+      if (gameActive) return;
+      event.preventDefault();
+      if (navigator.vibrate) navigator.vibrate(45);
+      control.child("startCommand").transaction(value => (Number(value) || 0) + 1)
+        .then(result => { if (result.committed) beginGame(); })
+        .catch(error => console.error("Could not start game:", error));
+    });
 
     function releaseAll() {
       heldPointers.clear();

@@ -1,0 +1,20 @@
+{
+  "rules": {
+    "machines": {
+      "red-blue-01": {
+        "control": {
+          ".read": true,
+          ".write": true,
+          "up": { ".validate": "newData.isBoolean()" },
+          "down": { ".validate": "newData.isBoolean()" },
+          "left": { ".validate": "newData.isBoolean()" },
+          "right": { ".validate": "newData.isBoolean()" },
+          "dropCommand": { ".validate": "newData.isNumber()" },
+          "openCommand": { ".validate": "newData.isNumber()" },
+          "startCommand": { ".validate": "newData.isNumber()" },
+          "$other": { ".validate": false }
+        }
+      }
+    }
+  }
+}
