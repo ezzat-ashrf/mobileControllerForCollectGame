@@ -1,34 +1,26 @@
-# Ariston Mobile Game Controller
+# Claw Machine Mobile Controller
 
-## Deploy with GitHub Pages
+This phone controller writes to Firebase Realtime Database at:
 
-1. Create a GitHub repository and place `index.html`, `Ariston.png`, and this `README.md` in its root.
-2. Push the files to the repository's default branch.
-3. In GitHub, open **Settings → Pages**.
-4. Under **Build and deployment**, choose **Deploy from a branch**, select the default branch and `/ (root)`, then save.
-5. Open the Pages URL on the phone. GitHub Pages uses HTTPS, which is supported by Firebase.
+`machines/red-blue-01/control`
 
-## Firebase Realtime Database Rules
+It provides held Up, Down, Left, and Right controls plus one-shot Drop and Open actions. Open `index.html` through an HTTPS web host such as GitHub Pages; do not open it directly as a local file.
 
-The controller writes to `devices/samsung-screen-01/control`. For a quick public demo, the narrowest unauthenticated rules are:
+## Firebase rules for a controlled demo
 
 ```json
 {
   "rules": {
-    "devices": {
-      "samsung-screen-01": {
+    "machines": {
+      "red-blue-01": {
         "control": {
           ".read": true,
           ".write": true,
-          "horizontal": {
-            ".validate": "newData.isNumber() && (newData.val() === -1 || newData.val() === 0 || newData.val() === 1)"
+          "$direction": {
+            ".validate": "$direction.matches(/^(up|down|left|right)$/) && newData.isBoolean()"
           },
-          "start": {
-            ".validate": "newData.isBoolean()"
-          },
-          "$other": {
-            ".validate": false
-          }
+          "dropCommand": { ".validate": "newData.isNumber()" },
+          "openCommand": { ".validate": "newData.isNumber()" }
         }
       }
     }
@@ -36,4 +28,8 @@ The controller writes to `devices/samsung-screen-01/control`. For a quick public
 }
 ```
 
-Publish rules in **Firebase Console → Realtime Database → Rules**. Public writes are suitable only for a controlled demo. For production, enable Firebase Authentication and require an authenticated user in `.write`.
+Public writes should only be used for a supervised demo. Production deployments should enable Firebase Authentication and require an authenticated controller.
+
+## Run locally
+
+From this directory, run `python -m http.server 8765`, then open `http://localhost:8765`.
