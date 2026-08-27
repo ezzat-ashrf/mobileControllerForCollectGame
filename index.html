@@ -11,7 +11,7 @@
     html,body { width:100%; height:100%; margin:0; overflow:hidden; overscroll-behavior:none; touch-action:none; }
     body { color:var(--graphite); font-family:system-ui,-apple-system,"Segoe UI",sans-serif; background:radial-gradient(circle at 50% -15%,#29464d 0 8%,transparent 44%),radial-gradient(circle at 18% 82%,#0c3940 0,transparent 30%),linear-gradient(145deg,#080d0f,#172125 48%,#05090b); padding:max(10px,env(safe-area-inset-top)) max(10px,env(safe-area-inset-right)) max(10px,env(safe-area-inset-bottom)) max(10px,env(safe-area-inset-left)); }
     body::before { content:""; position:fixed; inset:0; pointer-events:none; opacity:.25; background:repeating-linear-gradient(90deg,transparent 0 44px,#5ffaff0c 45px 46px),repeating-linear-gradient(0deg,transparent 0 44px,#5ffaff08 45px 46px); }
-    main { width:min(100%,560px); height:100%; margin:auto; display:grid; grid-template-rows:auto auto minmax(0,1fr); gap:clamp(8px,1.5vh,14px); }
+    main { position:relative; z-index:1; width:min(100%,560px); height:100%; margin:auto; display:grid; grid-template-rows:auto auto minmax(0,1fr); gap:clamp(8px,1.5vh,14px); }
     header { position:relative; min-height:128px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; padding:6px 42px; overflow:hidden; border:2px solid #9cffff; border-radius:28px; background:linear-gradient(145deg,#fff 0 38%,#e3edef 72%,#c8d6d9); box-shadow:0 0 10px #50edf2,0 0 28px #19e8ef77,0 18px 38px #000b,inset 0 2px #fff,inset 0 -4px #93a9ad38; }
     header::after { content:""; position:absolute; inset:auto 7% 0; height:4px; border-radius:99px; background:#baffff; box-shadow:0 0 8px #fff,0 0 20px var(--cyan),0 0 38px var(--cyan); animation:neonPulse 2.4s ease-in-out infinite; }
     .logo { display:block; width:min(84vw,390px); height:108px; object-fit:contain; transform:scale(1.08); filter:drop-shadow(0 0 9px #50edf2aa) drop-shadow(0 6px 8px #26607938); }
@@ -28,7 +28,7 @@
     .controls::before { content:"ECC CONTROL DECK"; position:absolute; left:50%; top:5px; transform:translateX(-50%); white-space:nowrap; color:#698086; font-size:.46rem; font-weight:900; letter-spacing:.22em; }
     .controls.locked { opacity:.32; filter:grayscale(.7); pointer-events:none; }
     .dpad { min-height:0; display:grid; grid-template:repeat(3,1fr)/repeat(3,1fr); gap:8px; aspect-ratio:1; align-self:center; }
-    button { border:2px solid #a8fcff; color:#195257; font:inherit; font-weight:900; cursor:pointer; touch-action:none; background:linear-gradient(145deg,#fff,#dce7e9 68%,#b9c9cc); box-shadow:0 0 8px #50edf288,0 9px 18px #0006,inset 0 2px #fff,inset 0 -4px #8fa4a844; transition:transform 65ms,filter 65ms,box-shadow 100ms; }
+    button { position:relative; overflow:hidden; border:2px solid #a8fcff; color:#195257; font:inherit; font-weight:900; cursor:pointer; touch-action:none; background:linear-gradient(145deg,#fff,#dce7e9 68%,#b9c9cc); box-shadow:0 0 8px #50edf288,0 9px 18px #0006,inset 0 2px #fff,inset 0 -4px #8fa4a844; transition:transform 65ms,filter 65ms,box-shadow 100ms; }
     button.active,button:active { transform:translateY(4px) scale(.97); filter:brightness(.8); box-shadow:0 3px 8px #0008,inset 0 2px 5px #0007; }
     .move { border-radius:24px; font-size:clamp(1.55rem,8vw,2.5rem); color:#00a5af; text-shadow:0 0 7px #fff,0 0 15px #50edf2; }
     #up { grid-area:1/2; } #left { grid-area:2/1; } #right { grid-area:2/3; } #down { grid-area:3/2; }
@@ -49,11 +49,72 @@
     #drop .claw-icon { transform:translateY(2px); }
     #drop .claw-icon::after { content:"↓"; position:absolute; right:-12px; top:5px; font-size:23px; font-weight:1000; }
     @keyframes neonPulse { 0%,100%{opacity:.72} 50%{opacity:1;filter:brightness(1.25)} }
-    @media (prefers-reduced-motion:reduce) { header::after{animation:none} }
+    .energy-line { position:fixed; z-index:0; width:42vw; height:1px; opacity:.5; pointer-events:none; background:linear-gradient(90deg,transparent,#50edf2,transparent); box-shadow:0 0 12px #50edf2; animation:energyDrift 4.8s linear infinite; }
+    .energy-line.one { top:24%; left:-42vw; }
+    .energy-line.two { bottom:18%; right:-42vw; animation-direction:reverse; animation-delay:-2.1s; }
+    header .logo { animation:brandBreath 3.2s ease-in-out infinite; }
+    #start:not(:disabled) { animation:startReady 1.65s ease-in-out infinite; }
+    .controls:not(.locked) { animation:deckLive 2s ease-in-out infinite; }
+    .controls:not(.locked) .center { animation:centerCore 1.8s ease-in-out infinite; }
+    .controls:not(.locked) .move { animation:arrowIdle 2.4s ease-in-out infinite; }
+    .controls:not(.locked) .move:nth-child(2n) { animation-delay:-1.2s; }
+    .move.active { animation:none!important; color:#eaffff; background:linear-gradient(145deg,#66f8fc,#00aab4); box-shadow:0 0 12px #fff,0 0 28px #50edf2,inset 0 0 18px #007a82; }
+    #drop:active .claw-icon { animation:clawDrop .38s ease-in-out; }
+    #open:active .claw-icon .left { transform:translateX(-10px) rotate(-38deg); }
+    #open:active .claw-icon .right { transform:translateX(10px) rotate(38deg); }
+    .claw-icon .talon { transition:transform .2s ease; }
+    .timer.urgent { color:#fff; border-color:#ff4967; background:#4a0713; text-shadow:0 0 9px #fff,0 0 18px #ff3150; box-shadow:0 0 10px #ff3150,0 0 26px #ff315088; animation:urgentBeat .55s ease-in-out infinite; }
+    .tap-ripple { position:absolute; z-index:5; width:18px; height:18px; margin:-9px 0 0 -9px; pointer-events:none; border:2px solid #fff; border-radius:50%; box-shadow:0 0 10px #50edf2; animation:rippleOut .55s ease-out forwards; }
+    @keyframes energyDrift { to{transform:translateX(142vw)} }
+    @keyframes brandBreath { 0%,100%{filter:drop-shadow(0 0 7px #50edf288) drop-shadow(0 5px 7px #26607932)} 50%{filter:drop-shadow(0 0 14px #50edf2) drop-shadow(0 7px 10px #26607955)} }
+    @keyframes startReady { 0%,100%{box-shadow:0 0 10px #50edf2,0 0 20px #50edf266,inset 0 2px #fff} 50%{box-shadow:0 0 15px #fff,0 0 36px #50edf2,inset 0 2px #fff} }
+    @keyframes deckLive { 0%,100%{box-shadow:0 0 9px #8ffcff,0 0 24px #50edf25c,0 20px 38px #000a,inset 0 2px #fff} 50%{box-shadow:0 0 13px #dfffff,0 0 38px #50edf299,0 20px 38px #000a,inset 0 2px #fff} }
+    @keyframes centerCore { 50%{transform:scale(1.045);box-shadow:0 0 28px #50edf2} }
+    @keyframes arrowIdle { 50%{text-shadow:0 0 8px #fff,0 0 24px #50edf2} }
+    @keyframes clawDrop { 45%{transform:translateY(11px)} }
+    @keyframes urgentBeat { 50%{transform:scale(1.055)} }
+    @keyframes rippleOut { to{width:130px;height:130px;margin:-65px 0 0 -65px;opacity:0} }
+    @media (prefers-reduced-motion:reduce) { *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important} }
     @media (orientation:landscape) and (max-height:560px) { main{max-width:900px;grid-template-columns:220px 1fr;grid-template-rows:auto minmax(0,1fr);gap:10px}header{grid-row:1/3;min-height:0;padding:10px}.logo{width:210px;height:auto;transform:scale(1.05)}.connection{top:auto;bottom:14px;right:50%;transform:translateX(50%)}.session{grid-column:2}.controls{grid-column:2;grid-template-columns:1fr .55fr}.dpad{height:100%;width:auto;margin:auto}.actions{grid-template-columns:1fr 1fr;grid-template-rows:1fr}.action{height:100%;width:auto}#open{aspect-ratio:1;border-radius:50%} }
+
+    /* Casual ECC game theme */
+    body { background:radial-gradient(circle at 12% 8%,#fff 0 9%,transparent 28%),radial-gradient(circle at 88% 88%,#7beff3 0 5%,transparent 25%),linear-gradient(145deg,#d8f8fa,#eefeff 48%,#bcecef); }
+    body::before { opacity:.3; background:radial-gradient(circle at 18% 30%,#50edf2 0 7px,transparent 8px),radial-gradient(circle at 80% 18%,#fff 0 11px,transparent 12px),radial-gradient(circle at 72% 72%,#00aeb8 0 5px,transparent 6px); background-size:130px 150px,170px 190px,110px 140px; animation:bubbleFloat 12s linear infinite; }
+    .energy-line { width:56px; height:56px; border:2px solid #50edf288; border-radius:50%; background:#ffffff55; box-shadow:0 8px 22px #00aeb833; animation:casualFloat 7s ease-in-out infinite; }
+    .energy-line.one { left:5%; top:18%; }
+    .energy-line.two { right:5%; bottom:13%; animation-direction:normal; }
+    header { border:0; border-radius:34px; background:#fffffff0; box-shadow:0 12px 28px #187a8030,inset 0 2px #fff; }
+    header::after { inset:auto 20% 7px; height:5px; border-radius:99px; box-shadow:0 3px 10px #50edf277; animation:none; }
+    header .logo { animation:casualLogo 4s ease-in-out infinite; }
+    .connection { padding:5px 8px; border-radius:99px; background:#e1f9fa; }
+    .session { gap:12px; }
+    #start { border:0; border-radius:28px; color:#fff; background:linear-gradient(145deg,#24d6dd,#009ca6); text-shadow:0 1px #00676d; box-shadow:0 9px 18px #008f9744,inset 0 2px #ffffff88; }
+    #start:not(:disabled) { animation:casualStart 2s ease-in-out infinite; }
+    .timer { border:0; border-radius:25px; color:#087c83; background:#fffffff2; text-shadow:none; box-shadow:0 9px 18px #187a8026; }
+    .timer.running { color:#087c83; background:#fff; box-shadow:0 9px 18px #187a8026,inset 0 -4px #50edf244; }
+    .controls { border:0; border-radius:38px; background:#ffffffdd; box-shadow:0 18px 38px #187a8033,inset 0 2px #fff; }
+    .controls::before { content:"LET'S PLAY"; top:7px; color:#159ba3; font-size:.52rem; }
+    .controls:not(.locked) { animation:casualDeck 2.8s ease-in-out infinite; }
+    button { border:0; border-radius:28px; background:linear-gradient(145deg,#fff,#dff9fa); box-shadow:0 8px 15px #187a8033,inset 0 2px #fff; }
+    button.active,button:active { filter:none; box-shadow:0 3px 8px #187a8044,inset 0 3px 7px #008d9544; }
+    .move { border-radius:28px; color:#009ba4; text-shadow:none; }
+    .controls:not(.locked) .move { animation:casualArrow 2.5s ease-in-out infinite; }
+    .center { border:0; color:#087c83; background:linear-gradient(145deg,#e8ffff,#b8eff2); box-shadow:0 7px 16px #187a8033; }
+    .controls:not(.locked) .center { animation:casualCenter 2.2s ease-in-out infinite; }
+    #drop { border:0; background:linear-gradient(145deg,#5cf0f4,#00aeb8); box-shadow:0 10px 20px #008f9760,inset 0 2px #ffffffaa; }
+    #open { border-radius:27px; background:linear-gradient(145deg,#fff,#c9f5f7); }
+    @keyframes bubbleFloat { to{background-position:130px -150px,-170px 190px,110px -140px} }
+    @keyframes casualFloat { 50%{transform:translateY(-18px) rotate(8deg)} }
+    @keyframes casualLogo { 50%{transform:scale(1.1) translateY(-2px);filter:drop-shadow(0 8px 12px #168a9040)} }
+    @keyframes casualStart { 50%{transform:translateY(-2px);box-shadow:0 12px 24px #008f9766,inset 0 2px #ffffffaa} }
+    @keyframes casualDeck { 50%{transform:translateY(-2px);box-shadow:0 22px 42px #187a8044,inset 0 2px #fff} }
+    @keyframes casualArrow { 50%{transform:translateY(-2px);color:#00cbd4} }
+    @keyframes casualCenter { 50%{transform:scale(1.04) rotate(2deg)} }
   </style>
 </head>
 <body>
+  <span class="energy-line one" aria-hidden="true"></span>
+  <span class="energy-line two" aria-hidden="true"></span>
   <main>
     <header>
       <img class="logo" src="Ecc Logo.png" alt="Egyptian Company for Cosmetics">
@@ -106,6 +167,7 @@
     const timerDisplay = document.getElementById("timer");
     const heldPointers = new Map();
     const GAME_SECONDS = 30;
+    const DEMO_MODE = new URLSearchParams(window.location.search).has("demo");
     const newClientId = () => crypto.randomUUID
       ? crypto.randomUUID()
       : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
@@ -120,6 +182,7 @@
     const serverNow = () => Date.now() + serverTimeOffset;
 
     function update(values) {
+      if (DEMO_MODE) return Promise.resolve();
       return control.update(values).catch(error => console.error("Firebase write failed:", error));
     }
 
@@ -152,15 +215,29 @@
     function increment(command) {
       if (!gameActive) return Promise.resolve();
       if (navigator.vibrate) navigator.vibrate(35);
+      if (DEMO_MODE) return Promise.resolve();
       return control.child(command).transaction(value => (Number(value) || 0) + 1);
     }
 
     document.getElementById("drop").addEventListener("pointerdown", event => { event.preventDefault(); increment("dropCommand"); });
     document.getElementById("open").addEventListener("pointerdown", event => { event.preventDefault(); increment("openCommand"); });
 
+    function beginDemoGame() {
+      releaseAll(false);
+      gameActive = true;
+      gameEndsAt = Date.now() + GAME_SECONDS * 1000;
+      document.body.classList.add("playing");
+      controls.classList.remove("locked");
+      timerDisplay.classList.add("running");
+      startButton.disabled = true;
+      startButton.textContent = "DEMO PLAYING";
+      renderTimer();
+    }
+
     function renderTimer() {
       const seconds = Math.max(0, Math.ceil((gameEndsAt - serverNow()) / 1000));
       timerDisplay.textContent = `00:${String(seconds).padStart(2, "0")}`;
+      timerDisplay.classList.toggle("urgent", gameActive && seconds > 0 && seconds <= 5);
       if (seconds <= 0) showAvailable();
     }
 
@@ -168,6 +245,12 @@
       if (startButton.disabled) return;
       event.preventDefault();
       if (navigator.vibrate) navigator.vibrate(45);
+
+      if (DEMO_MODE) {
+        beginDemoGame();
+        return;
+      }
+
       startButton.disabled = true;
       startButton.textContent = "STARTING...";
 
@@ -202,10 +285,17 @@
     function showAvailable() {
       const wasActive = gameActive;
       gameActive = false;
+      document.body.classList.remove("playing");
+      timerDisplay.classList.remove("urgent");
       if (wasActive) releaseAll(true);
       controls.classList.add("locked");
       timerDisplay.classList.remove("running");
       timerDisplay.textContent = "00:30";
+      if (DEMO_MODE) {
+        startButton.disabled = false;
+        startButton.textContent = "START DEMO";
+        return;
+      }
       startButton.disabled = !(firebaseOnline && sessionStateLoaded);
       startButton.textContent = firebaseOnline && sessionStateLoaded ? "START GAME" : "CONNECTING...";
     }
@@ -214,6 +304,7 @@
       const wasActive = gameActive;
       gameEndsAt = Number(state.gameEndsAt) || 0;
       gameActive = gameEndsAt > serverNow() && state.activeControllerId === clientId;
+      document.body.classList.toggle("playing", gameActive);
       if (wasActive && !gameActive) releaseAll(true);
       controls.classList.toggle("locked", !gameActive);
       timerDisplay.classList.toggle("running", gameEndsAt > serverNow());
@@ -223,10 +314,12 @@
     }
 
     db.ref(".info/serverTimeOffset").on("value", snapshot => {
+      if (DEMO_MODE) return;
       serverTimeOffset = Number(snapshot.val()) || 0;
     });
 
     control.on("value", snapshot => {
+      if (DEMO_MODE) return;
       sessionStateLoaded = true;
       const state = snapshot.val() || {};
       if ((Number(state.gameEndsAt) || 0) > serverNow()) showBusy(state);
@@ -238,6 +331,7 @@
     }, 200);
 
     db.ref(".info/connected").on("value", snapshot => {
+      if (DEMO_MODE) return;
       const online = snapshot.val() === true;
       firebaseOnline = online;
       connection.classList.toggle("connected", online);
@@ -257,6 +351,27 @@
     document.addEventListener("visibilitychange", () => { if (document.hidden) releaseAll(); });
     document.addEventListener("contextmenu", event => event.preventDefault());
     document.addEventListener("touchmove", event => event.preventDefault(), { passive:false });
+
+    document.querySelectorAll("button").forEach(button => {
+      button.addEventListener("pointerdown", event => {
+        if (button.disabled) return;
+        const rect = button.getBoundingClientRect();
+        const ripple = document.createElement("span");
+        ripple.className = "tap-ripple";
+        ripple.style.left = `${event.clientX - rect.left}px`;
+        ripple.style.top = `${event.clientY - rect.top}px`;
+        button.appendChild(ripple);
+        ripple.addEventListener("animationend", () => ripple.remove(), { once:true });
+      });
+    });
+
+    if (DEMO_MODE) {
+      firebaseOnline = true;
+      sessionStateLoaded = true;
+      connection.classList.add("connected");
+      connection.querySelector(".label").textContent = "DEMO";
+      showAvailable();
+    }
   </script>
 </body>
 </html>
