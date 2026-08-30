@@ -116,7 +116,7 @@
     body::before { opacity:.58; background:linear-gradient(#ffffff06 50%,#00000016 50%),radial-gradient(circle at 10% 12%,#ffd43b 0 2px,transparent 3px),radial-gradient(circle at 88% 28%,#18d9ff 0 2px,transparent 3px),radial-gradient(circle at 28% 82%,#ff244f 0 2px,transparent 3px); background-size:100% 4px,83px 79px,101px 97px,121px 113px; animation:starScroll 18s linear infinite; }
     main { width:min(100%,590px); gap:clamp(9px,1.6vh,15px); }
     header { min-height:126px; border:4px solid var(--arcade-yellow); border-radius:18px 18px 34px 34px; background:linear-gradient(180deg,#25103b,#11091c 70%); box-shadow:0 0 0 4px #a51c46,0 0 22px #ff244faa,0 16px 0 #07030c,0 24px 36px #000,inset 0 0 28px #842dff66; clip-path:polygon(4% 0,96% 0,100% 18%,96% 100%,4% 100%,0 18%); }
-    header::before { content:"CLAW QUEST"; position:absolute; top:7px; left:50%; transform:translateX(-50%); z-index:2; color:var(--arcade-yellow); font-size:clamp(.67rem,3vw,.9rem); letter-spacing:.2em; text-shadow:2px 2px #e42155,0 0 12px #ff244f; white-space:nowrap; }
+    header::before { content:none; }
     header::after { inset:auto 15% 7px; height:3px; background:var(--arcade-blue); box-shadow:0 0 8px #fff,0 0 20px var(--arcade-blue); animation:marqueeFlash 1.2s steps(2) infinite; }
     .logo { width:min(77vw,350px); height:94px; margin-top:13px; transform:none; filter:drop-shadow(3px 3px 0 #ff244f) drop-shadow(-3px -2px 0 #18d9ff); animation:logoGlitch 4s steps(1) infinite!important; }
     .connection { top:11px; right:19px; padding:4px 7px; color:#8d809b; background:#08040ecc; border:1px solid #49305e; border-radius:4px; font-family:ui-monospace,Consolas,monospace; }
@@ -128,7 +128,7 @@
     .timer { min-width:110px; height:58px; display:flex; align-items:center; justify-content:center; padding:0 7px; border:3px solid var(--arcade-blue); border-radius:8px; color:var(--arcade-yellow); background:#02070b; font-family:ui-monospace,Consolas,monospace; font-size:1.34rem; letter-spacing:0; text-shadow:0 0 5px currentColor,0 0 12px currentColor; box-shadow:0 5px 0 #063a50,0 0 18px #18d9ff88,inset 0 0 15px #18d9ff22; }
     .timer.running { color:#63ff8c; background:#020905; box-shadow:0 5px 0 #075027,0 0 18px #3dff7788,inset 0 0 15px #3dff7722; }
     .controls { padding:clamp(20px,4vw,28px) clamp(12px,3vw,20px) clamp(13px,3vw,20px); border:5px solid #3c294a; border-radius:24px; background:linear-gradient(155deg,#2b1b38,#130b1c 55%,#09060e); box-shadow:0 0 0 3px #09060e,0 0 0 6px #5a176f,0 18px 0 #050308,0 28px 40px #000,inset 0 2px #76558a,inset 0 -10px 24px #000; }
-    .controls::before { content:"PLAYER 1  •  CONTROL DECK"; top:7px; color:var(--arcade-yellow); font-family:ui-monospace,Consolas,monospace; font-size:.57rem; letter-spacing:.14em; text-shadow:0 0 7px #ff244f; }
+    .controls::before { content:none; }
     .controls::after { content:"✦"; position:absolute; right:9px; top:5px; color:var(--arcade-blue); text-shadow:0 0 7px var(--arcade-blue); }
     .controls.locked { opacity:.42; filter:grayscale(.8); }
     .controls:not(.locked) { animation:deckGlow 2.2s ease-in-out infinite; }
