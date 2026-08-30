@@ -231,7 +231,7 @@
     </header>
     <section class="session">
       <button id="start" disabled>CONNECTING...</button>
-      <div id="timer" class="timer" aria-live="polite">00:30</div>
+      <div id="timer" class="timer" aria-live="polite">00:45</div>
     </section>
     <section id="controls" class="controls locked" aria-label="Claw controls">
       <div class="dpad">
@@ -275,7 +275,7 @@
     const startButton = document.getElementById("start");
     const timerDisplay = document.getElementById("timer");
     const heldPointers = new Map();
-    const GAME_SECONDS = 30;
+    const GAME_SECONDS = 45;
     const DEMO_MODE = new URLSearchParams(window.location.search).has("demo");
     const newClientId = () => crypto.randomUUID
       ? crypto.randomUUID()
@@ -399,7 +399,7 @@
       if (wasActive) releaseAll(true);
       controls.classList.add("locked");
       timerDisplay.classList.remove("running");
-      timerDisplay.textContent = "00:30";
+      timerDisplay.textContent = "00:45";
       if (DEMO_MODE) {
         startButton.disabled = false;
         startButton.textContent = "START DEMO";

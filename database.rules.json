@@ -13,7 +13,7 @@
           "openCommand": { ".validate": "newData.isNumber()" },
           "startCommand": { ".validate": "newData.isNumber()" },
           "gameEndsAt": {
-            ".validate": "newData.isNumber() && (newData.val() === data.val() || !data.exists() || data.val() <= now)"
+            ".validate": "newData.isNumber() && (newData.val() === data.val() || !data.exists() || data.val() <= now || newData.val() < data.val())"
           },
           "activeControllerId": { ".validate": "newData.isString() && newData.val().length <= 100" },
           "$other": { ".validate": false }
