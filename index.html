@@ -172,6 +172,19 @@
     .energy-line.two { border-color:#55c8ff; background:#126aa3; box-shadow:0 0 0 4px #03101a,0 0 18px #2388c9; }
     @keyframes insertCoin { 50%{filter:brightness(1.2);box-shadow:0 6px 0 #06476e,0 0 28px #55c8ff,inset 0 2px #cdefff} }
     @keyframes deckGlow { 50%{box-shadow:0 0 0 3px #020a10,0 0 0 6px #2388c9,0 18px 0 #02070b,0 28px 40px #000,0 0 25px #55c8ff66,inset 0 2px #3d81a9} }
+    /* Physical arcade push-buttons */
+    .dpad { gap:clamp(7px,2vw,11px); padding:5px; }
+    .move { width:88%; height:88%; place-self:center; aspect-ratio:1; border:clamp(5px,1.4vw,8px) solid #06111a; border-radius:50%; background:radial-gradient(circle at 38% 28%,#e7f8ff 0 5%,#69d1ff 9%,#2388c9 42%,#096395 74%,#043b5c 100%); color:#fff; font-size:clamp(1.35rem,7vw,2.2rem); text-shadow:0 2px 2px #043652,0 0 7px #fff; box-shadow:0 0 0 3px #47788f,0 9px 0 #031d2d,0 13px 16px #000c,inset 0 5px 5px #d8f5ff99,inset 0 -8px 10px #032c47aa; }
+    .move::after { content:""; position:absolute; inset:7%; border-radius:50%; border:1px solid #d8f5ff66; box-shadow:inset 0 2px 4px #fff7; pointer-events:none; }
+    .move.active,.move:active { transform:translateY(7px) scale(.96); color:#fff; border-color:#06111a; background:radial-gradient(circle at 45% 42%,#80dcff,#2388c9 48%,#075483); box-shadow:0 0 0 3px #55c8ff,0 2px 0 #031d2d,0 0 24px #55c8ff,inset 0 5px 12px #032c47; }
+    .center { width:78%; height:78%; place-self:center; border-width:6px; box-shadow:0 0 0 3px #47788f,0 8px 0 #033654,0 12px 16px #000,inset 0 4px #c8eeff; }
+    .action { border-radius:50%!important; }
+    #drop { width:92%; height:auto; place-self:center; border-width:clamp(7px,1.8vw,10px); box-shadow:0 0 0 4px #47788f,0 12px 0 #033654,0 18px 22px #000d,0 0 25px #55c8ff66,inset 0 6px #fff,inset 0 -10px 13px #07548388; }
+    #open { width:86%; height:auto; min-height:0; aspect-ratio:1; place-self:center; border:clamp(6px,1.6vw,9px) solid #06111a; background:radial-gradient(circle at 38% 28%,#ecfaff 0 5%,#72d5ff 10%,#2388c9 44%,#075483 78%); box-shadow:0 0 0 4px #47788f,0 10px 0 #033654,0 15px 19px #000c,0 0 20px #55c8ff55,inset 0 5px #e6f8ff,inset 0 -9px 12px #03365499; }
+    #drop::before,#open::before { content:""; position:absolute; inset:6%; border-radius:50%; border:2px solid #d9f4ff66; box-shadow:inset 0 3px 5px #fff7; pointer-events:none; }
+    #drop:active,#open:active { transform:translateY(8px) scale(.96); filter:brightness(1.08); box-shadow:0 0 0 4px #55c8ff,0 3px 0 #033654,0 5px 9px #000c,0 0 28px #55c8ff,inset 0 6px 15px #06476e; }
+    #drop .action-label,#open .action-label { position:relative; z-index:2; max-width:82%; line-height:1.12; }
+    #drop .claw-icon,#open .claw-icon { position:relative; z-index:2; }
     @media (max-width:420px) { body{padding:max(7px,env(safe-area-inset-top)) max(7px,env(safe-area-inset-right)) max(7px,env(safe-area-inset-bottom)) max(7px,env(safe-area-inset-left))} main{gap:10px} header{min-height:112px}.logo{height:83px;margin-top:14px}.session{gap:9px}#start{font-size:1rem;letter-spacing:.04em}.timer{min-width:96px;padding:0 4px;font-size:1.12rem}.controls{grid-template-columns:minmax(0,1.18fr) minmax(102px,.82fr);gap:10px}.actions{gap:10px}.action-label{font-size:.58rem;letter-spacing:.05em}#open{min-height:67px}.claw-icon{transform:scale(.88)}#drop .claw-icon{transform:scale(.88) translateY(2px)} }
     @media (orientation:landscape) and (max-height:560px) { header{border-radius:16px;clip-path:polygon(7% 0,93% 0,100% 12%,96% 100%,4% 100%,0 12%)} .logo{width:195px}.controls{grid-template-columns:1fr .62fr;padding-top:20px}.actions{grid-template-columns:1fr 1fr}.action{max-height:100%} }
   </style>
@@ -181,7 +194,7 @@
   <span class="energy-line two" aria-hidden="true"></span>
   <main>
     <header>
-      <img class="logo" src="Ecc Logo.png" alt="Egyptian Company for Cosmetics">
+      <img class="logo" src="Nutrition Hub Logo.png" alt="Nutrition Hub">
       <div id="connection" class="connection"><span class="dot"></span><span class="label">OFFLINE</span></div>
     </header>
     <section class="session">
