@@ -276,6 +276,7 @@
     const timerDisplay = document.getElementById("timer");
     const heldPointers = new Map();
     const GAME_SECONDS = 45;
+    const RESULT_SECONDS = 10;
     const DEMO_MODE = new URLSearchParams(window.location.search).has("demo");
     const newClientId = () => crypto.randomUUID
       ? crypto.randomUUID()
@@ -284,6 +285,7 @@
     const clientId = newClientId();
     let gameActive = false;
     let gameEndsAt = 0;
+    let playEndsAt = 0;
     let serverTimeOffset = 0;
     let firebaseOnline = false;
     let sessionStateLoaded = false;
@@ -334,7 +336,8 @@
     function beginDemoGame() {
       releaseAll(false);
       gameActive = true;
-      gameEndsAt = Date.now() + GAME_SECONDS * 1000;
+      playEndsAt = Date.now() + GAME_SECONDS * 1000;
+      gameEndsAt = playEndsAt + RESULT_SECONDS * 1000;
       document.body.classList.add("playing");
       controls.classList.remove("locked");
       timerDisplay.classList.add("running");
@@ -344,10 +347,22 @@
     }
 
     function renderTimer() {
-      const seconds = Math.max(0, Math.ceil((gameEndsAt - serverNow()) / 1000));
+      const now = serverNow();
+      const playing = playEndsAt > now;
+      const deadline = playing ? playEndsAt : gameEndsAt;
+      const seconds = Math.max(0, Math.ceil((deadline - now) / 1000));
       timerDisplay.textContent = `00:${String(seconds).padStart(2, "0")}`;
-      timerDisplay.classList.toggle("urgent", gameActive && seconds > 0 && seconds <= 5);
-      if (seconds <= 0) showAvailable();
+      timerDisplay.classList.toggle("urgent", playing && gameActive && seconds > 0 && seconds <= 5);
+
+      if (!playing && gameActive) {
+        gameActive = false;
+        releaseAll(true);
+        controls.classList.add("locked");
+        document.body.classList.remove("playing");
+        startButton.textContent = "RESULT";
+      }
+
+      if (gameEndsAt <= now) showAvailable();
     }
 
     startButton.addEventListener("pointerdown", event => {
@@ -371,7 +386,8 @@
           ...current,
           up:false, down:false, left:false, right:false,
           startCommand:(Number(current.startCommand) || 0) + 1,
-          gameEndsAt:now + GAME_SECONDS * 1000,
+          playEndsAt:now + GAME_SECONDS * 1000,
+          gameEndsAt:now + (GAME_SECONDS + RESULT_SECONDS) * 1000,
           activeControllerId:clientId
         };
       })
@@ -394,6 +410,8 @@
     function showAvailable() {
       const wasActive = gameActive;
       gameActive = false;
+      gameEndsAt = 0;
+      playEndsAt = 0;
       document.body.classList.remove("playing");
       timerDisplay.classList.remove("urgent");
       if (wasActive) releaseAll(true);
@@ -412,13 +430,16 @@
     function showBusy(state) {
       const wasActive = gameActive;
       gameEndsAt = Number(state.gameEndsAt) || 0;
-      gameActive = gameEndsAt > serverNow() && state.activeControllerId === clientId;
+      playEndsAt = Number(state.playEndsAt) || 0;
+      const sessionActive = gameEndsAt > serverNow();
+      const playActive = playEndsAt > serverNow();
+      gameActive = sessionActive && playActive && state.activeControllerId === clientId;
       document.body.classList.toggle("playing", gameActive);
       if (wasActive && !gameActive) releaseAll(true);
       controls.classList.toggle("locked", !gameActive);
-      timerDisplay.classList.toggle("running", gameEndsAt > serverNow());
-      startButton.disabled = gameEndsAt > serverNow();
-      startButton.textContent = gameActive ? "YOUR GAME" : "PLEASE WAIT";
+      timerDisplay.classList.toggle("running", sessionActive);
+      startButton.disabled = sessionActive;
+      startButton.textContent = gameActive ? "YOUR GAME" : (playActive ? "PLEASE WAIT" : "RESULT");
       renderTimer();
     }
 
@@ -436,7 +457,9 @@
     });
 
     setInterval(() => {
-      if (gameEndsAt > serverNow()) renderTimer();
+      // Keep checking through zero; otherwise the display can remain at 00:01
+      // until another Firebase event or button press wakes the UI.
+      if (gameEndsAt > 0) renderTimer();
     }, 200);
 
     db.ref(".info/connected").on("value", snapshot => {

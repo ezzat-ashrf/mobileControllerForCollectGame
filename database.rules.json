@@ -12,8 +12,9 @@
           "dropCommand": { ".validate": "newData.isNumber()" },
           "openCommand": { ".validate": "newData.isNumber()" },
           "startCommand": { ".validate": "newData.isNumber()" },
+          "playEndsAt": { ".validate": "newData.isNumber()" },
           "gameEndsAt": {
-            ".validate": "newData.isNumber() && (newData.val() === data.val() || !data.exists() || data.val() <= now || newData.val() < data.val())"
+            ".validate": "newData.isNumber() && (newData.val() === data.val() || !data.exists() || data.val() <= now || newData.val() < data.val() || newData.val() <= now + 15000)"
           },
           "activeControllerId": { ".validate": "newData.isString() && newData.val().length <= 100" },
           "$other": { ".validate": false }
